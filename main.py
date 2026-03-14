@@ -6,8 +6,10 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
-KAFKA_BROKER = os.getenv("KAFKA_BROKER", "localhost:9092")
+KAFKA_BROKER = os.getenv("KAFKA_BROKER")
 KAFKA_TOPIC = os.getenv("KAFKA_TOPIC", "transactions")
+KAFKA_API_KEY = os.getenv("KAFKA_API_KEY")
+KAFKA_API_SECRET = os.getenv("KAFKA_API_SECRET")
 
 app = FastAPI()
 
@@ -18,7 +20,13 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-producer = Producer({"bootstrap.servers": KAFKA_BROKER})
+producer = Producer({
+    "bootstrap.servers": KAFKA_BROKER,
+    "security.protocol": "SASL_SSL",
+    "sasl.mechanisms": "PLAIN",
+    "sasl.username": KAFKA_API_KEY,
+    "sasl.password": KAFKA_API_SECRET,
+})
 
 
 class TransactionPayload(BaseModel):
