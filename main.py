@@ -51,7 +51,11 @@ def create_transaction(payload: TransactionPayload):
             value=json.dumps(payload.model_dump()),
             callback=delivery_report,
         )
-        producer.flush()
+        undelivered = producer.flush(timeout=5)
+        if undelivered > 0:
+            raise HTTPException(status_code=500, detail="Failed to deliver message to Kafka")
         return {"status": "published", "topic": KAFKA_TOPIC}
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
